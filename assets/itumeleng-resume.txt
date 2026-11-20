@@ -39,6 +39,8 @@ PowerPoint - Strong
 HTML & semantics - Strong
 CSS & responsive layout - Comfortable
 JavaScript - Learning
+C++ - Comfortable
+R (tidyverse) - Comfortable
 Python - Learning
 SQL - Learning
 Statistics & probability - Comfortable
