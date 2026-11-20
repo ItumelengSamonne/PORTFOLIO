@@ -54,10 +54,15 @@ story = []
 story.append(Paragraph("Itumeleng Molefi Samonne", name_style))
 story.append(Paragraph("Data Science Student | Front-End Developer", role_style))
 story.append(Paragraph(
-    "Kimberley, Northern Cape, ZA  |  itumelengmosesane22@gmail.com  |  +27 64 702 9667",
+    'Kimberley, Northern Cape, ZA  |  '
+    '<a href="mailto:itumelengmosesane22@gmail.com" color="#1d4ed8">itumelengmosesane22@gmail.com</a>'
+    '  |  <a href="tel:+27647029667" color="#1d4ed8">+27 64 702 9667</a>',
     contact_style))
 story.append(Paragraph(
-    "github.com/Paska465  |  linkedin.com/in/itumeleng-samonne-3x7", contact_style))
+    '<a href="https://github.com/Paska465" color="#1d4ed8">github.com/Paska465</a>'
+    '  |  '
+    '<a href="https://www.linkedin.com/in/itumeleng-samonne-3x7" color="#1d4ed8">linkedin.com/in/itumeleng-samonne-3x7</a>',
+    contact_style))
 story.append(HRFlowable(width="100%", thickness=1.2, color=colors.HexColor("#1d4ed8"),
                         spaceAfter=8))
 
