@@ -1,603 +1,356 @@
-/* ==========================================================================
-   Itumeleng — portfolio behaviour
-   No dependencies. Everything is progressive enhancement: the page reads
-   fine with JavaScript disabled.
-   ========================================================================== */
+/* ============================================================
+   Portfolio V2 — behaviour (no dependencies)
+   ============================================================ */
 (function () {
-  "use strict";
+  'use strict';
 
-  document.documentElement.classList.add("js");
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-  const $ = (selector, scope) => (scope || document).querySelector(selector);
-  const $$ = (selector, scope) => Array.from((scope || document).querySelectorAll(selector));
-  const prefersReducedMotion = () =>
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-  /* ------------------------------------------------------------------ *
-   * Theme
-   * ------------------------------------------------------------------ */
-  (function theme() {
-    const root = document.documentElement;
-    const toggle = $("[data-theme-toggle]");
-    if (!toggle) return;
-
-    const sync = (theme) => {
-      const isDark = theme === "dark";
-      toggle.setAttribute("aria-pressed", String(!isDark));
-      toggle.setAttribute(
-        "aria-label",
-        isDark ? "Switch to light theme" : "Switch to dark theme"
-      );
-    };
-
-    sync(root.dataset.theme || "dark");
-
-    toggle.addEventListener("click", () => {
-      const next = root.dataset.theme === "dark" ? "light" : "dark";
-      root.dataset.theme = next;
-      try {
-        localStorage.setItem("theme", next);
-      } catch (error) {
-        /* Private mode: the preference just will not persist. */
-      }
-      sync(next);
+  /* ---------- Theme toggle ---------- */
+  const root = document.documentElement;
+  const themeToggle = $('[data-theme-toggle]');
+  const applyTheme = (theme) => {
+    root.dataset.theme = theme;
+    if (themeToggle) {
+      themeToggle.setAttribute('aria-label', theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
+      themeToggle.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
+    }
+    try { localStorage.setItem('theme', theme); } catch (e) { /* ignore */ }
+  };
+  if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+      applyTheme(root.dataset.theme === 'dark' ? 'light' : 'dark');
     });
+  }
 
-    window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", (event) => {
-      let stored = null;
-      try {
-        stored = localStorage.getItem("theme");
-      } catch (error) {
-        stored = null;
-      }
-      if (!stored) {
-        const next = event.matches ? "light" : "dark";
-        root.dataset.theme = next;
-        sync(next);
+  /* ---------- Mobile menu ---------- */
+  const menuToggle = $('[data-menu-toggle]');
+  const nav = $('#primary-nav');
+  if (menuToggle && nav) {
+    menuToggle.addEventListener('click', () => {
+      const open = nav.classList.toggle('is-open');
+      menuToggle.setAttribute('aria-expanded', String(open));
+      menuToggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    });
+    nav.addEventListener('click', (e) => {
+      if (e.target.closest('a')) {
+        nav.classList.remove('is-open');
+        menuToggle.setAttribute('aria-expanded', 'false');
+        menuToggle.setAttribute('aria-label', 'Open menu');
       }
     });
-  })();
-
-  /* ------------------------------------------------------------------ *
-   * Mobile menu
-   * ------------------------------------------------------------------ */
-  (function menu() {
-    const toggle = $("[data-menu-toggle]");
-    const nav = $("#primary-nav");
-    if (!toggle || !nav) return;
-
-    const setOpen = (open) => {
-      toggle.setAttribute("aria-expanded", String(open));
-      toggle.setAttribute("aria-label", open ? "Close menu" : "Open menu");
-      nav.classList.toggle("is-open", open);
-    };
-
-    toggle.addEventListener("click", () => {
-      setOpen(toggle.getAttribute("aria-expanded") !== "true");
-    });
-
-    nav.addEventListener("click", (event) => {
-      if (event.target.closest("a")) setOpen(false);
-    });
-
-    document.addEventListener("click", (event) => {
-      if (
-        toggle.getAttribute("aria-expanded") === "true" &&
-        !nav.contains(event.target) &&
-        !toggle.contains(event.target)
-      ) {
-        setOpen(false);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && nav.classList.contains('is-open')) {
+        nav.classList.remove('is-open');
+        menuToggle.setAttribute('aria-expanded', 'false');
+        menuToggle.setAttribute('aria-label', 'Open menu');
+        menuToggle.focus();
       }
     });
+  }
 
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && toggle.getAttribute("aria-expanded") === "true") {
-        setOpen(false);
-        toggle.focus();
-      }
+  /* ---------- Command palette ---------- */
+  const palette = $('[data-palette]');
+  const paletteOpen = $('[data-palette-open]');
+  const paletteInput = palette ? palette.querySelector('[data-palette-input]') : null;
+  const paletteList = palette ? palette.querySelector('[data-palette-list]') : null;
+  let paletteActive = 0;
+
+  const openPalette = () => {
+    if (!palette) return;
+    palette.classList.add('is-open');
+    palette.setAttribute('aria-hidden', 'false');
+    if (paletteInput) { paletteInput.value = ''; paletteInput.focus(); }
+    renderPalette('');
+  };
+  const closePalette = () => {
+    if (!palette) return;
+    palette.classList.remove('is-open');
+    palette.setAttribute('aria-hidden', 'true');
+  };
+  if (paletteOpen) paletteOpen.addEventListener('click', openPalette);
+  if (palette) {
+    palette.addEventListener('click', (e) => {
+      if (e.target === palette || e.target.hasAttribute('data-palette-backdrop')) closePalette();
     });
+  }
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      palette && palette.classList.contains('is-open') ? closePalette() : openPalette();
+    }
+    if (e.key === 'Escape' && palette && palette.classList.contains('is-open')) closePalette();
+  });
 
-    // A resize past the breakpoint should not leave the panel in a stale state.
-    window.matchMedia("(min-width: 901px)").addEventListener("change", (event) => {
-      if (event.matches) setOpen(false);
-    });
-  })();
+  const paletteItems = [
+    { label: 'Home', hint: 'Top of page', href: '#top' },
+    { label: 'Selected work', hint: 'Projects', href: '#work' },
+    { label: 'About', hint: 'Bio & principles', href: '#about' },
+    { label: 'Skills', hint: 'Capabilities', href: '#skills' },
+    { label: 'Experience', hint: 'Timeline', href: '#experience' },
+    { label: 'Writing', hint: 'Notes', href: '#writing' },
+    { label: 'Contact', hint: 'Say hello', href: '#contact' },
+    { label: 'Résumé', hint: 'Printable CV', href: 'resume.html' },
+    { label: 'Toggle theme', hint: 'Light / dark', action: () => { root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark'; try { localStorage.setItem('theme', root.dataset.theme); } catch (e) {} } },
+    { label: 'Copy email', hint: 'Clipboard', action: () => copyText('itumelengmosesane22@gmail.com') },
+  ];
 
-  /* ------------------------------------------------------------------ *
-   * Header progress + scrollspy
-   * ------------------------------------------------------------------ */
-  (function scrollChrome() {
-    const header = $(".site-header");
-    const bar = $("[data-scroll-progress]");
-    let queued = false;
-
-    const paint = () => {
-      queued = false;
-      const doc = document.documentElement;
-      const max = doc.scrollHeight - window.innerHeight;
-      const ratio = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
-      if (bar) bar.style.width = (ratio * 100).toFixed(2) + "%";
-      if (header) header.classList.toggle("is-stuck", window.scrollY > 8);
-    };
-
-    const request = () => {
-      if (!queued) {
-        queued = true;
-        window.requestAnimationFrame(paint);
-      }
-    };
-
-    paint();
-    window.addEventListener("scroll", request, { passive: true });
-    window.addEventListener("resize", request, { passive: true });
-
-    const links = $$('.nav-list a[href^="#"]');
-    const sections = links
-      .map((link) => document.getElementById(link.getAttribute("href").slice(1)))
-      .filter(Boolean);
-
-    if (!("IntersectionObserver" in window) || sections.length === 0) return;
-
-    const setCurrent = (id) => {
-      links.forEach((link) => {
-        const match = link.getAttribute("href") === "#" + id;
-        link.classList.toggle("is-current", match);
-        if (match) link.setAttribute("aria-current", "true");
-        else link.removeAttribute("aria-current");
-      });
-    };
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (visible) setCurrent(visible.target.id);
-      },
-      { rootMargin: "-20% 0px -60% 0px", threshold: [0, 0.15, 0.4, 0.75] }
-    );
-
-    sections.forEach((section) => observer.observe(section));
-  })();
-
-  /* ------------------------------------------------------------------ *
-   * Reveal on scroll
-   * ------------------------------------------------------------------ */
-  (function reveal() {
-    const items = $$("[data-reveal]");
-    if (items.length === 0) return;
-
-    if (prefersReducedMotion() || !("IntersectionObserver" in window)) {
-      items.forEach((item) => item.classList.add("is-revealed"));
+  function renderPalette(q) {
+    if (!paletteList) return;
+    const query = q.trim().toLowerCase();
+    const filtered = paletteItems.filter((it) => it.label.toLowerCase().includes(query) || (it.hint && it.hint.toLowerCase().includes(query)));
+    paletteList.innerHTML = '';
+    if (filtered.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'palette-empty';
+      empty.textContent = 'No matches';
+      paletteList.appendChild(empty);
       return;
     }
+    filtered.forEach((it, i) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'palette-item' + (i === 0 ? ' is-active' : '');
+      btn.setAttribute('role', 'option');
+      btn.innerHTML = `<span>${escapeHtml(it.label)}</span><span style="margin-left:auto;font-size:0.78rem;color:var(--text-faint)">${escapeHtml(it.hint || '')}</span>`;
+      btn.addEventListener('click', () => { runPaletteItem(it); closePalette(); });
+      paletteList.appendChild(btn);
+    });
+    paletteActive = 0;
+  }
+  if (paletteInput) {
+    paletteInput.addEventListener('input', (e) => renderPalette(e.target.value));
+    paletteInput.addEventListener('keydown', (e) => {
+      const items = paletteList ? paletteList.querySelectorAll('.palette-item') : [];
+      if (e.key === 'ArrowDown') { e.preventDefault(); paletteActive = Math.min(paletteActive + 1, items.length - 1); updatePaletteActive(items); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); paletteActive = Math.max(paletteActive - 1, 0); updatePaletteActive(items); }
+      else if (e.key === 'Enter') {
+        e.preventDefault();
+        const active = items[paletteActive];
+        if (active) active.click();
+      }
+    });
+  }
+  function updatePaletteActive(items) {
+    items.forEach((it, i) => it.classList.toggle('is-active', i === paletteActive));
+    if (items[paletteActive]) items[paletteActive].scrollIntoView({ block: 'nearest' });
+  }
+  function runPaletteItem(it) {
+    if (it.action) it.action();
+    else if (it.href) {
+      if (it.href.startsWith('#')) {
+        const target = document.querySelector(it.href);
+        if (target) target.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        window.location.href = it.href;
+      }
+    }
+  }
 
-    items.forEach((item, index) => {
-      if (item.dataset.revealGroup === undefined) {
-        item.style.setProperty("--reveal-delay", Math.min(index % 4, 3) * 55 + "ms");
+  /* ---------- Copy to clipboard ---------- */
+  const toast = $('[data-toast]');
+  let toastTimer = null;
+  function showToast(msg) {
+    if (!toast) return;
+    toast.textContent = msg;
+    toast.classList.add('is-visible');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('is-visible'), 2200);
+  }
+  function copyText(text) {
+    const done = () => showToast('Copied to clipboard');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(fallback);
+    } else fallback();
+    function fallback() {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); done(); } catch (e) { showToast('Could not copy'); }
+      document.body.removeChild(ta);
+    }
+  }
+  $$('[data-copy]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const text = btn.getAttribute('data-copy');
+      const label = btn.getAttribute('data-copy-label') || text;
+      copyText(text);
+      showToast('Copied ' + label);
+    });
+  });
+
+  /* ---------- Work filter ---------- */
+  const filterButtons = $$('[data-filter]');
+  const workCards = $$('[data-category]');
+  const filterStatus = $('[data-filter-status]');
+  const validFilters = ['all', 'data', 'office', 'frontend'];
+  function applyFilter(filter, push = true) {
+    const f = validFilters.includes(filter) ? filter : 'all';
+    filterButtons.forEach((b) => {
+      const active = b.getAttribute('data-filter') === f;
+      b.classList.toggle('is-active', active);
+      b.setAttribute('aria-pressed', String(active));
+    });
+    let shown = 0;
+    workCards.forEach((card) => {
+      const cat = card.getAttribute('data-category');
+      const show = f === 'all' || cat === f;
+      card.classList.toggle('is-hidden', !show);
+      if (show) shown++;
+    });
+    if (filterStatus) filterStatus.textContent = `Showing ${shown} of ${workCards.length} projects`;
+    if (push) {
+      const url = new URL(window.location);
+      if (f === 'all') url.searchParams.delete('filter'); else url.searchParams.set('filter', f);
+      history.replaceState(null, '', url);
+    }
+  }
+  filterButtons.forEach((btn) => {
+    btn.addEventListener('click', () => applyFilter(btn.getAttribute('data-filter')));
+  });
+  const initialFilter = new URLSearchParams(window.location.search).get('filter');
+  applyFilter(initialFilter || 'all', false);
+
+  /* ---------- Reveal on scroll ---------- */
+  const revealEls = $$('[data-reveal]');
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+    revealEls.forEach((el) => io.observe(el));
+  } else {
+    revealEls.forEach((el) => el.classList.add('is-visible'));
+  }
+
+  /* ---------- Count-up stats ---------- */
+  const statValues = $$('[data-count]');
+  function countUp(el) {
+    const target = parseFloat(el.getAttribute('data-count'));
+    const prefix = el.getAttribute('data-prefix') || '';
+    const suffix = el.getAttribute('data-suffix') || '';
+    const duration = 1200;
+    const start = performance.now();
+    function tick(now) {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      const val = target * eased;
+      const display = Number.isInteger(target) ? Math.round(val) : val.toFixed(1);
+      el.textContent = prefix + display + suffix;
+      if (t < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+  if ('IntersectionObserver' in window) {
+    const sio = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          countUp(entry.target);
+          sio.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.4 });
+    statValues.forEach((el) => sio.observe(el));
+  } else {
+    statValues.forEach(countUp);
+  }
+
+  /* ---------- Scrollspy + reading progress ---------- */
+  const navLinks = $$('.nav-list a[href^="#"]');
+  const sections = navLinks.map((a) => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const progressBar = $('[data-scroll-progress]');
+  function onScroll() {
+    const y = window.scrollY + 120;
+    let current = sections[0];
+    sections.forEach((sec) => { if (sec && sec.offsetTop <= y) current = sec; });
+    navLinks.forEach((a) => {
+      a.classList.toggle('is-active', current && a.getAttribute('href') === '#' + current.id);
+    });
+    if (progressBar) {
+      const h = document.documentElement.scrollHeight - window.innerHeight;
+      const pct = h > 0 ? (window.scrollY / h) * 100 : 0;
+      progressBar.style.width = pct + '%';
+    }
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  /* ---------- Contact form ---------- */
+  const form = $('[data-contact-form]');
+  if (form) {
+    const statusEl = $('[data-form-status]');
+    const submitBtn = form.querySelector('.form-submit');
+    const submitLabel = form.querySelector('[data-submit-label]');
+    const fields = {
+      name: { el: $('#name'), err: $('[data-error-for="name"]'), validate: (v) => v.trim().length >= 2 ? '' : 'Please enter your name (at least 2 characters).' },
+      email: { el: $('#email'), err: $('[data-error-for="email"]'), validate: (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? '' : 'Please enter a valid email address.' },
+      topic: { el: $('#topic'), err: $('[data-error-for="topic"]'), validate: (v) => v ? '' : 'Please choose what you need.' },
+      message: { el: $('#message'), err: $('[data-error-for="message"]'), validate: (v) => v.trim().length >= 20 ? '' : 'Message must be at least 20 characters.' },
+    };
+
+    function validateField(key) {
+      const f = fields[key];
+      if (!f || !f.el) return true;
+      const msg = f.validate(f.el.value);
+      if (f.err) f.err.textContent = msg;
+      f.el.setAttribute('aria-invalid', msg ? 'true' : 'false');
+      return !msg;
+    }
+    Object.keys(fields).forEach((key) => {
+      const f = fields[key];
+      if (f.el) {
+        f.el.addEventListener('blur', () => validateField(key));
+        f.el.addEventListener('input', () => { if (f.el.getAttribute('aria-invalid') === 'true') validateField(key); });
       }
     });
 
-    const observer = new IntersectionObserver(
-      (entries, obs) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          entry.target.classList.add("is-revealed");
-          obs.unobserve(entry.target);
-        });
-      },
-      { rootMargin: "0px 0px -10% 0px", threshold: 0.1 }
-    );
-
-    items.forEach((item) => observer.observe(item));
-  })();
-
-  /* ------------------------------------------------------------------ *
-   * Stat counters
-   * ------------------------------------------------------------------ */
-  (function counters() {
-    const values = $$("[data-count]");
-    if (values.length === 0) return;
-
-    const run = (node) => {
-      const target = Number(node.dataset.count);
-      const prefix = node.dataset.prefix || "";
-      const suffix = node.dataset.suffix || "";
-      if (!Number.isFinite(target)) return;
-
-      if (prefersReducedMotion()) {
-        node.textContent = prefix + target + suffix;
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const honeypot = $('#company-url');
+      if (honeypot && honeypot.value) return;
+      let ok = true;
+      Object.keys(fields).forEach((key) => { if (!validateField(key)) ok = false; });
+      if (!ok) {
+        const firstInvalid = Object.keys(fields).map((k) => fields[k]).find((f) => f.el && f.el.getAttribute('aria-invalid') === 'true');
+        if (firstInvalid) firstInvalid.el.focus();
+        if (statusEl) statusEl.textContent = 'Please fix the highlighted fields.';
         return;
       }
-
-      const duration = 1100;
-      const start = performance.now();
-
-      const tick = (now) => {
-        const progress = Math.min(1, (now - start) / duration);
-        const eased = 1 - Math.pow(1 - progress, 3);
-        node.textContent = prefix + Math.round(target * eased) + suffix;
-        if (progress < 1) window.requestAnimationFrame(tick);
-      };
-
-      window.requestAnimationFrame(tick);
-    };
-
-    if (!("IntersectionObserver" in window)) {
-      values.forEach(run);
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries, obs) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          run(entry.target);
-          obs.unobserve(entry.target);
-        });
-      },
-      { threshold: 0.6 }
-    );
-
-    values.forEach((node) => observer.observe(node));
-  })();
-
-  /* ------------------------------------------------------------------ *
-   * Project filter (state kept in the URL)
-   * ------------------------------------------------------------------ */
-  (function projectFilter() {
-    const grid = $("[data-work-grid]");
-    const chips = $$("[data-filter]");
-    const status = $("[data-filter-status]");
-    if (!grid || chips.length === 0) return;
-
-    const cards = $$("[data-category]", grid);
-    const valid = chips.map((chip) => chip.dataset.filter);
-
-    const apply = (value, updateUrl) => {
-      const filter = valid.includes(value) ? value : "all";
-      let shown = 0;
-
-      cards.forEach((card) => {
-        const match = filter === "all" || card.dataset.category === filter;
-        card.hidden = !match;
-        if (match) shown += 1;
-        if (match) {
-          // Replay the reveal transition so filtered cards are never invisible.
-          card.classList.add("is-revealed");
-        }
-      });
-
-      chips.forEach((chip) => {
-        const active = chip.dataset.filter === filter;
-        chip.setAttribute("aria-pressed", String(active));
-        chip.classList.toggle("is-active", active);
-      });
-
-      if (status) {
-        const label =
-          filter === "all"
-            ? "all " + shown + " projects"
-            : shown + (shown === 1 ? " project" : " projects") + " in " + filterLabel(filter);
-        status.textContent = "Showing " + label;
-      }
-
-      if (updateUrl) {
-        const url = new URL(window.location.href);
-        if (filter === "all") url.searchParams.delete("filter");
-        else url.searchParams.set("filter", filter);
-        history.pushState({ filter: filter }, "", url);
-      }
-    };
-
-    const filterLabel = (value) => {
-      const chip = chips.find((item) => item.dataset.filter === value);
-      return chip ? chip.textContent.replace(/\d+$/, "").trim().toLowerCase() : value;
-    };
-
-    chips.forEach((chip) => {
-      chip.addEventListener("click", () => apply(chip.dataset.filter, true));
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.setAttribute('aria-busy', 'true'); }
+      if (submitLabel) submitLabel.textContent = 'Sending…';
+      const data = new FormData(form);
+      const subject = encodeURIComponent(`Portfolio enquiry: ${data.get('topic')}`);
+      const body = encodeURIComponent(
+        `Name: ${data.get('name')}\nEmail: ${data.get('email')}\nTopic: ${data.get('topic')}\n\n${data.get('message')}`
+      );
+      window.location.href = `mailto:itumelengmosesane22@gmail.com?subject=${subject}&body=${body}`;
+      setTimeout(() => {
+        if (statusEl) statusEl.textContent = 'Your email client should have opened. If not, email itumelengmosesane22@gmail.com directly.';
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.removeAttribute('aria-busy'); }
+        if (submitLabel) submitLabel.textContent = 'Send message';
+        form.reset();
+      }, 600);
     });
+  }
 
-    window.addEventListener("popstate", () => {
-      apply(new URLSearchParams(window.location.search).get("filter") || "all", false);
-    });
+  /* ---------- Helpers ---------- */
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
 
-    apply(new URLSearchParams(window.location.search).get("filter") || "all", false);
-  })();
+  /* ---------- Print button ---------- */
+  $$('[data-print]').forEach((btn) => {
+    btn.addEventListener('click', () => window.print());
+  });
 
-  /* ------------------------------------------------------------------ *
-   * Copy to clipboard
-   * ------------------------------------------------------------------ */
-  (function clipboard() {
-    const toast = $("[data-toast]");
-    let timer = 0;
-
-    const announce = (message) => {
-      if (!toast) return;
-      window.clearTimeout(timer);
-      toast.textContent = message;
-      toast.hidden = false;
-      // Force a frame so the transition runs when the toast is re-used.
-      void toast.offsetWidth;
-      toast.classList.add("is-visible");
-      timer = window.setTimeout(() => {
-        toast.classList.remove("is-visible");
-        timer = window.setTimeout(() => {
-          toast.hidden = true;
-        }, 250);
-      }, 2200);
-    };
-
-    const copy = async (text) => {
-      try {
-        if (navigator.clipboard && window.isSecureContext) {
-          await navigator.clipboard.writeText(text);
-        } else {
-          const area = document.createElement("textarea");
-          area.value = text;
-          area.setAttribute("readonly", "");
-          area.style.position = "fixed";
-          area.style.opacity = "0";
-          document.body.appendChild(area);
-          area.select();
-          document.execCommand("copy");
-          area.remove();
-        }
-        announce("Copied " + text);
-        return true;
-      } catch (error) {
-        announce("Could not copy — the address is " + text);
-        return false;
-      }
-    };
-
-    $$("[data-copy]").forEach((button) => {
-      button.addEventListener("click", () => copy(button.dataset.copy));
-    });
-  })();
-
-  /* ------------------------------------------------------------------ *
-   * Command palette
-   * ------------------------------------------------------------------ */
-  (function palette() {
-    const dialog = $("[data-palette]");
-    if (!dialog || typeof dialog.showModal !== "function") return;
-
-    const input = $("[data-palette-input]", dialog);
-    const items = $$("[data-palette-item]", dialog);
-    const empty = $("[data-palette-empty]", dialog);
-    const opener = $("[data-palette-open]");
-    let active = 0;
-
-    const visibleItems = () => items.filter((item) => !item.parentElement.hidden);
-
-    const select = (index) => {
-      const list = visibleItems();
-      if (list.length === 0) return;
-      active = (index + list.length) % list.length;
-      items.forEach((item) => item.setAttribute("aria-selected", "false"));
-      list[active].setAttribute("aria-selected", "true");
-      list[active].scrollIntoView({ block: "nearest" });
-    };
-
-    const filter = () => {
-      const query = input.value.trim().toLowerCase();
-      items.forEach((item) => {
-        const match = item.textContent.toLowerCase().includes(query);
-        item.parentElement.hidden = !match;
-        item.setAttribute("aria-selected", "false");
-      });
-      const list = visibleItems();
-      if (empty) empty.hidden = list.length > 0;
-      active = 0;
-      if (list.length > 0) list[0].setAttribute("aria-selected", "true");
-    };
-
-    const open = () => {
-      if (dialog.open) return;
-      input.value = "";
-      filter();
-      dialog.showModal();
-      input.focus({ preventScroll: true });
-    };
-
-    const close = () => {
-      if (dialog.open) dialog.close();
-    };
-
-    if (opener) opener.addEventListener("click", open);
-
-    document.addEventListener("keydown", (event) => {
-      const key = event.key.toLowerCase();
-      if ((event.ctrlKey || event.metaKey) && key === "k") {
-        event.preventDefault();
-        dialog.open ? close() : open();
-      }
-    });
-
-    input.addEventListener("input", filter);
-
-    input.addEventListener("keydown", (event) => {
-      if (event.key === "ArrowDown") {
-        event.preventDefault();
-        select(active + 1);
-      } else if (event.key === "ArrowUp") {
-        event.preventDefault();
-        select(active - 1);
-      } else if (event.key === "Enter") {
-        const list = visibleItems();
-        const target = list[active];
-        if (target) {
-          event.preventDefault();
-          target.click();
-          close();
-        }
-      }
-    });
-
-    // Chromium's `type="search"` input swallows Escape to clear itself, which stops the
-    // dialog's native cancel event, so someone who types then presses Escape gets stuck.
-    dialog.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        close();
-      }
-    });
-
-    items.forEach((item) => {
-      item.setAttribute("role", "option");
-      item.addEventListener("mouseenter", () => {
-        const list = visibleItems();
-        select(list.indexOf(item));
-      });
-      item.addEventListener("click", close);
-    });
-
-    // Click on the backdrop (outside the dialog box) closes it.
-    dialog.addEventListener("click", (event) => {
-      if (event.target === dialog) close();
-    });
-
-    dialog.addEventListener("close", () => {
-      if (opener) opener.focus({ preventScroll: true });
-    });
-  })();
-
-  /* ------------------------------------------------------------------ *
-   * Back to top
-   * ------------------------------------------------------------------ */
-  (function backToTop() {
-    const button = $("[data-back-to-top]");
-    if (!button) return;
-    button.addEventListener("click", () => {
-      window.scrollTo({
-        top: 0,
-        behavior: prefersReducedMotion() ? "auto" : "smooth",
-      });
-      const brand = $(".site-header .brand");
-      if (brand) brand.focus({ preventScroll: true });
-    });
-  })();
-
-  /* ------------------------------------------------------------------ *
-   * Contact form
-   * ------------------------------------------------------------------ */
-  (function contactForm() {
-    const form = $("[data-contact-form]");
-    if (!form) return;
-
-    const status = $("[data-form-status]", form);
-    const submit = $(".form-submit", form);
-    const label = $("[data-submit-label]", form);
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-
-    const fields = {
-      name: {
-        el: $("#name", form),
-        test: (value) => value.trim().length >= 2,
-        message: "Enter your name so I know who I'm replying to.",
-      },
-      email: {
-        el: $("#email", form),
-        test: (value) => emailPattern.test(value.trim()),
-        message: "That email doesn't look right. Try name@company.co.za.",
-      },
-      topic: {
-        el: $("#topic", form),
-        test: (value) => value.trim() !== "",
-        message: "Pick the closest option — “Something else” is fine.",
-      },
-      message: {
-        el: $("#message", form),
-        test: (value) => value.trim().length >= 20,
-        message: "A little more detail, please — at least 20 characters.",
-      },
-    };
-
-    const setError = (field, invalid) => {
-      const wrapper = field.el.closest(".field");
-      const error = $('[data-error-for="' + field.el.name + '"]', form);
-      wrapper.classList.toggle("has-error", invalid);
-      field.el.setAttribute("aria-invalid", invalid ? "true" : "false");
-      if (error) error.textContent = invalid ? field.message : "";
-    };
-
-    const validate = (field) => {
-      const valid = field.test(field.el.value);
-      setError(field, !valid);
-      return valid;
-    };
-
-    Object.values(fields).forEach((field) => {
-      field.el.addEventListener("blur", () => {
-        if (field.el.value !== "") validate(field);
-      });
-      field.el.addEventListener("input", () => {
-        const wrapper = field.el.closest(".field");
-        if (wrapper.classList.contains("has-error") && field.test(field.el.value)) {
-          setError(field, false);
-        }
-      });
-    });
-
-    if (status) {
-      form.addEventListener("submit", (event) => {
-        event.preventDefault();
-        status.textContent = "";
-        status.classList.remove("is-error");
-
-        const results = Object.values(fields).map(validate);
-        const firstInvalid = Object.values(fields).find(
-          (field) => field.el.getAttribute("aria-invalid") === "true"
-        );
-
-        if (results.includes(false)) {
-          status.textContent = "Check the highlighted fields and try again.";
-          status.classList.add("is-error");
-          if (firstInvalid) firstInvalid.el.focus();
-          return;
-        }
-
-        const honeypot = $("#company-url", form);
-        if (honeypot && honeypot.value !== "") {
-          status.textContent = "Message sent. I'll reply within 2 working days.";
-          form.reset();
-          return;
-        }
-
-        const data = new FormData(form);
-        const body = [
-          "Name: " + data.get("name"),
-          "Email: " + data.get("email"),
-          "Topic: " + data.get("topic"),
-          "",
-          data.get("message"),
-        ].join("\n");
-
-        submit.setAttribute("aria-busy", "true");
-        if (label) label.textContent = "Opening mail app…";
-
-        window.setTimeout(() => {
-          window.location.href =
-            "mailto:itumelengmosesane22@gmail.com?subject=" +
-            encodeURIComponent("Portfolio enquiry — " + data.get("topic")) +
-            "&body=" +
-            encodeURIComponent(body);
-
-          submit.removeAttribute("aria-busy");
-          if (label) label.textContent = "Send message";
-          status.textContent =
-            "Your mail app should be open with the message ready. If nothing happened, email itumelengmosesane22@gmail.com directly.";
-          form.reset();
-        }, 450);
-      });
-    }
-  })();
-
-  /* ------------------------------------------------------------------ *
-   * Small things
-   * ------------------------------------------------------------------ */
-  const year = $("[data-year]");
-  if (year) year.textContent = String(new Date().getFullYear());
+  /* ---------- Back to top ---------- */
+  const backToTop = $('[data-back-to-top]');
+  if (backToTop) {
+    backToTop.addEventListener('click', (e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+  }
 })();

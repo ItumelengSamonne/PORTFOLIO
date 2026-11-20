@@ -1,50 +1,68 @@
-ITUMELENG — Data Scientist & Front-End Developer
-Kimberley, South Africa · itumelengmosesane22@gmail.com
-github.com · linkedin.com · kaggle.com
+ITUMELENG MOLEFI SAMONNE
+Data Science Student | Front-End Developer
+Kimberley, Northern Cape, South Africa
+Email: itumelengmosesane22@gmail.com | Student: 202632113@spu.co.za
+Phone: +27 64 702 9667 | WhatsApp: +27 64 702 9667
+GitHub: https://github.com/Paska465
+LinkedIn: https://www.linkedin.com/in/itumeleng-samonne-3x7
 
 SUMMARY
-Final-year BSc Data Science student working across machine learning, analytics
-engineering and hand-written front-end. I build the whole path from cleaned data
-to a shipped interface: churn models with explanations, forecast pipelines, and
-dashboards people actually open.
-
-EXPERIENCE
-Data Science Intern — Fintech (remote)                                   Feb 2026 – Present
-- Built a churn model (XGBoost, SHAP) scoring 1.2M customers; AUC 0.91,
-  precision 0.84 at the chosen threshold.
-- Replaced a 40-minute manual SQL pull with dbt models and a self-serve
-  Streamlit report.
-- Designed and read out three A/B tests with pre-registered hypotheses.
-
-Front-End Developer — Freelance                                     Jun 2025 – Dec 2025
-- Shipped 7 static marketing sites; median Lighthouse performance 98,
-  no third-party JavaScript.
-- Reduced one client's page weight from 4.1 MB to 260 KB; bounce rate halved.
-- Delivered a one-page handover document with every project.
-
-Analytics Assistant — University research group                    Sep 2024 – May 2025
-- Cleaned and documented a 4,000-respondent survey pipeline in R, reproducible
-  in one command.
-- Produced figures for two published papers and an internal policy brief.
+First-year Data Science student at Sol Plaatje University with strong, practical skills in
+Microsoft Excel, Access, Word and PowerPoint (from Computer Applications Technology in high
+school) and growing skills in Python, SQL, statistics, probability, calculus and algebra.
+Writes hand-crafted HTML, CSS and JavaScript. Open to internships, part-time work and small
+freelance projects in data cleaning, Excel/Access builds, dashboards and web pages.
 
 EDUCATION
-BSc Data Science — University of Johannesburg                       Feb 2023 – Nov 2026
-- Capstone: forecasting municipal service demand.
-- Tutor for first-year programming (Python and SQL), 30 students.
+BSc Data Science - First Year (complete)
+Sol Plaatje University, Kimberley | Feb 2026 - Nov 2026
+- Semester 1: Basic Computer Organisation & Architecture, Calculus, Core Curriculum 1,
+  Intro to Algorithms & Programming, Intro to Statistics.
+- Semester 2: Algebra, Core Curriculum 2, Data Science I, Data Structures & Algorithms,
+  Intro to Numerical Methods & Math Modelling, Probability Theory.
+- All 11 first-year modules passed.
+
+National Senior Certificate
+Pinagare High School | 2021 - 2025
+- Subjects: Setswana (HL), English (FAL), Mathematics, Life Orientation, Computer
+  Applications Technology (CAT), Life Science, Physical Science.
+- CAT covered word processing, spreadsheets, databases and presentations.
+
+Primary schooling
+Sacred Heart Private Primary School | 2014 - 2020
 
 SKILLS
-Languages      Python, SQL, JavaScript (ES2023), R, Bash, HTML, CSS
-Data science   scikit-learn, XGBoost, LightGBM, pandas, NumPy, PyTorch, SHAP
-Analytics      dbt, BigQuery, Postgres, DuckDB, Parquet, Power BI, Plotly, D3
-Front-end      Semantic HTML, modern CSS, DOM APIs, SVG, WCAG 2.2, Core Web Vitals
-Tooling        Git, GitHub Actions, Docker, pytest, Playwright, Figma, LaTeX
+Microsoft Excel - Strong
+Microsoft Access - Strong
+Microsoft Word - Strong
+PowerPoint - Strong
+HTML & semantics - Strong
+CSS & responsive layout - Comfortable
+JavaScript - Learning
+Python - Learning
+SQL - Learning
+Statistics & probability - Comfortable
+Calculus & algebra - Comfortable
+Data structures & algorithms - Comfortable
+Git & GitHub - Comfortable
+Linux - Learning
 
-SELECTED PROJECTS
-Churn Radar     Churn model with SHAP explanations, FastAPI service and review
-                dashboard. AUC 0.91.
-Demand Line     Hierarchical forecast for 340 store-SKU pairs, MinT
-                reconciliation. MAPE 8.4%.
-Signal Screener Browser-only stock screener in vanilla JS with IndexedDB.
-                41 KB total, zero dependencies.
+PROJECTS
+Project One - data analysis (placeholder) | Personal | 2026
+- Clean a messy dataset, explore it, and present one clear finding. Replace with real project.
+- Tools: Python, Pandas, Jupyter.
+
+Project Two - Access database (placeholder) | Personal | 2026
+- An Access database or Excel workbook solving a real problem - forms, queries, reports.
+- Tools: Access, Excel, SQL.
+
+Project Three - web page (placeholder) | Personal | 2026
+- A small, accessible web page or component built by hand.
+- Tools: HTML, CSS, JavaScript.
+
+ADDITIONAL
+- Location: Kimberley, Northern Cape (base); also Taung (NW) and Johannesburg/Pretoria.
+- Languages: English, Setswana.
+- Interests: Linux (Fedora), open source, data visualisation.
 
 References available on request.

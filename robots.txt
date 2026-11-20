@@ -1,6 +1,4 @@
-# Crawl everything except build cruft.
 User-agent: *
 Allow: /
-Disallow: /404.html
 
 Sitemap: https://paska465.github.io/PORTFOLIO/sitemap.xml
