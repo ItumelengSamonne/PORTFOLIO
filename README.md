@@ -1,6 +1,6 @@
 # Itumeleng — My Portfolio
 
-**Live site:** https://paska465.github.io/PORTFOLIO/
+**Live site:** https://itumelengSamonne.github.io/PORTFOLIO/
 
 A hand-built portfolio for a first-year Data Science student (Sol Plaatje University) who also writes
 HTML, CSS and JavaScript. No framework, no build step — one HTML file, one stylesheet, one script,
